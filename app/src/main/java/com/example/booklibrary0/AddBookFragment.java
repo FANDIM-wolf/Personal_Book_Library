@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -19,7 +20,8 @@ public class AddBookFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_add_book, container, false);
     }
@@ -33,7 +35,7 @@ public class AddBookFragment extends Fragment {
         yearInput = view.findViewById(R.id.yearInput);
         saveButton = view.findViewById(R.id.saveButton);
 
-        dbHelper = new DatabaseHelper(getContext());
+        dbHelper = new DatabaseHelper(requireContext());
 
         saveButton.setOnClickListener(v -> saveBook());
     }
@@ -48,16 +50,14 @@ public class AddBookFragment extends Fragment {
             return;
         }
 
-        Book book = new Book(0, title, author, year);
-        long result = dbHelper.addBook(book);
-
+        long result = dbHelper.addBook(new Book(0, title, author, year));
         if (result > 0) {
-            Toast.makeText(getContext(), "Книга добавлена!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Книга добавлена", Toast.LENGTH_SHORT).show();
             titleInput.setText("");
             authorInput.setText("");
             yearInput.setText("");
         } else {
-            Toast.makeText(getContext(), "Ошибка при добавлении", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Ошибка добавления", Toast.LENGTH_SHORT).show();
         }
     }
 }

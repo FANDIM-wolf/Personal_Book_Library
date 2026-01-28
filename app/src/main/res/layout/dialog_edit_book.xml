@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:background="#FFFFFF">
+    android:padding="16dp">
 
     <EditText
-        android:id="@+id/titleInput"
+        android:id="@+id/etTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Название книги"
+        android:hint="Название"
         android:background="@android:drawable/editbox_background"
         android:textColor="#000000"
         android:textColorHint="#000000"
@@ -18,7 +17,7 @@
         android:layout_marginBottom="16dp" />
 
     <EditText
-        android:id="@+id/authorInput"
+        android:id="@+id/etAuthor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Автор"
@@ -29,7 +28,7 @@
         android:layout_marginBottom="16dp" />
 
     <EditText
-        android:id="@+id/yearInput"
+        android:id="@+id/etYear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Год"
@@ -37,15 +36,5 @@
         android:background="@android:drawable/editbox_background"
         android:textColor="#000000"
         android:textColorHint="#000000"
-        android:padding="12dp"
-        android:layout_marginBottom="24dp" />
-
-    <Button
-        android:id="@+id/saveButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="СОХРАНИТЬ КНИГУ"
-        android:background="#000000"
-        android:textColor="#FFFFFF" />
-
+        android:padding="12dp" />
 </LinearLayout>

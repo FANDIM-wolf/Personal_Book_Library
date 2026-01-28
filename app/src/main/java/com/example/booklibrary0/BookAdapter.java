@@ -14,15 +14,22 @@ public class BookAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        if (position == 0) {
-            return new LibraryFragment();
-        } else {
-            return new AddBookFragment();
+        switch (position) {
+            case 0:
+                return new RecordsFragment();
+            case 1:
+                return new BooksFragment();
+            case 2:
+                return new AddBookFragment();
+            default:
+                return new BooksFragment();
         }
     }
 
     @Override
     public int getItemCount() {
-        return 2;
+        return 3;
     }
+
+
 }

@@ -37,4 +37,14 @@
         android:textColor="#000000"
         android:textColorHint="#000000"
         android:padding="12dp" />
+    <EditText
+        android:id="@+id/etAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Количество"
+        android:inputType="number"
+        android:background="@android:drawable/editbox_background"
+        android:textColor="#000000"
+        android:textColorHint="#000000"
+        android:padding="12dp" />
 </LinearLayout>

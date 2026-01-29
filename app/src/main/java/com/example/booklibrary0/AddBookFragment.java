@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment;
 
 public class AddBookFragment extends Fragment {
 
-    private EditText titleInput, authorInput, yearInput;
+    private EditText titleInput, authorInput, yearInput, amountInput;
     private Button saveButton;
     private DatabaseHelper dbHelper;
 
@@ -33,8 +33,9 @@ public class AddBookFragment extends Fragment {
         titleInput = view.findViewById(R.id.titleInput);
         authorInput = view.findViewById(R.id.authorInput);
         yearInput = view.findViewById(R.id.yearInput);
-        saveButton = view.findViewById(R.id.saveButton);
+        amountInput = view.findViewById(R.id.amountInput);
 
+        saveButton = view.findViewById(R.id.saveButton);
         dbHelper = new DatabaseHelper(requireContext());
 
         saveButton.setOnClickListener(v -> saveBook());
@@ -44,18 +45,28 @@ public class AddBookFragment extends Fragment {
         String title = titleInput.getText().toString().trim();
         String author = authorInput.getText().toString().trim();
         String year = yearInput.getText().toString().trim();
+        String amountStr = amountInput.getText().toString().trim();
 
-        if (title.isEmpty() || author.isEmpty() || year.isEmpty()) {
+        if (title.isEmpty() || author.isEmpty() || year.isEmpty() || amountStr.isEmpty()) {
             Toast.makeText(getContext(), "Заполните все поля", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        long result = dbHelper.addBook(new Book(0, title, author, year));
+        int amount;
+        try {
+            amount = Integer.parseInt(amountStr);
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Количество должно быть числом", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        long result = dbHelper.addBook(new Book(0, title, author, year, amount));
         if (result > 0) {
             Toast.makeText(getContext(), "Книга добавлена", Toast.LENGTH_SHORT).show();
             titleInput.setText("");
             authorInput.setText("");
             yearInput.setText("");
+            amountInput.setText("");
         } else {
             Toast.makeText(getContext(), "Ошибка добавления", Toast.LENGTH_SHORT).show();
         }

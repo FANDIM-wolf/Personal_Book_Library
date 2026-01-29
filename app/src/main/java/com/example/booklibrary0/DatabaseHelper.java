@@ -12,7 +12,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "library.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3; // увеличили версию
 
     // Books
     private static final String TABLE_BOOKS = "books";
@@ -20,6 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_TITLE = "title";
     private static final String COLUMN_AUTHOR = "author";
     private static final String COLUMN_YEAR = "year";
+    private static final String COLUMN_AMOUNT = "amount";
 
     // Users
     private static final String TABLE_USERS = "users";
@@ -45,7 +46,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         COLUMN_TITLE + " TEXT, " +
                         COLUMN_AUTHOR + " TEXT, " +
-                        COLUMN_YEAR + " TEXT" +
+                        COLUMN_YEAR + " TEXT, " +
+                        COLUMN_AMOUNT + " INTEGER NOT NULL DEFAULT 0" +
                         ")";
         db.execSQL(CREATE_BOOKS_TABLE);
 
@@ -71,10 +73,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOANS);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOOKS);
-        onCreate(db);
+        // Мягкая миграция для amount
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE " + TABLE_BOOKS +
+                    " ADD COLUMN " + COLUMN_AMOUNT + " INTEGER NOT NULL DEFAULT 0");
+        }
     }
 
     // ---------- BOOKS ----------
@@ -84,6 +87,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_TITLE, book.getTitle());
         values.put(COLUMN_AUTHOR, book.getAuthor());
         values.put(COLUMN_YEAR, book.getYear());
+        values.put(COLUMN_AMOUNT, book.getAmount());
         long id = db.insert(TABLE_BOOKS, null, values);
         db.close();
         return id;
@@ -95,12 +99,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_BOOKS, null);
 
         if (cursor.moveToFirst()) {
+            int amountIndex = cursor.getColumnIndex(COLUMN_AMOUNT); // может быть -1 на старой базе
             do {
                 int id = cursor.getInt(0);
                 String title = cursor.getString(1);
                 String author = cursor.getString(2);
                 String year = cursor.getString(3);
-                books.add(new Book(id, title, author, year));
+                int amount = (amountIndex >= 0) ? cursor.getInt(amountIndex) : 0;
+                books.add(new Book(id, title, author, year, amount));
             } while (cursor.moveToNext());
         }
 
@@ -122,6 +128,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_TITLE, book.getTitle());
         values.put(COLUMN_AUTHOR, book.getAuthor());
         values.put(COLUMN_YEAR, book.getYear());
+        values.put(COLUMN_AMOUNT, book.getAmount());
         int result = db.update(TABLE_BOOKS, values, COLUMN_ID + "=?", new String[]{String.valueOf(book.getId())});
         db.close();
         return result;

@@ -28,8 +28,7 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_book, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_book, parent, false);
         return new ViewHolder(view);
     }
 
@@ -40,6 +39,7 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
         holder.titleView.setText(book.getTitle());
         holder.authorView.setText("Автор: " + book.getAuthor());
         holder.yearView.setText("Год: " + book.getYear());
+        holder.amountView.setText("Количество: " + book.getAmount());
 
         holder.deleteButton.setOnClickListener(v -> {
             int adapterPos = holder.getBindingAdapterPosition();
@@ -66,10 +66,12 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
             EditText etTitle = dialogView.findViewById(R.id.etTitle);
             EditText etAuthor = dialogView.findViewById(R.id.etAuthor);
             EditText etYear = dialogView.findViewById(R.id.etYear);
+            EditText etAmount = dialogView.findViewById(R.id.etAmount); // важно: etAmount
 
             etTitle.setText(b.getTitle());
             etAuthor.setText(b.getAuthor());
             etYear.setText(b.getYear());
+            etAmount.setText(String.valueOf(b.getAmount()));
 
             new AlertDialog.Builder(holder.itemView.getContext())
                     .setTitle("Изменить книгу")
@@ -78,9 +80,18 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
                         String newTitle = etTitle.getText().toString().trim();
                         String newAuthor = etAuthor.getText().toString().trim();
                         String newYear = etYear.getText().toString().trim();
-                        if (newTitle.isEmpty() || newAuthor.isEmpty() || newYear.isEmpty()) return;
+                        String newAmountStr = etAmount.getText().toString().trim();
 
-                        Book updated = new Book(b.getId(), newTitle, newAuthor, newYear);
+                        if (newTitle.isEmpty() || newAuthor.isEmpty() || newYear.isEmpty() || newAmountStr.isEmpty()) return;
+
+                        int newAmount;
+                        try {
+                            newAmount = Integer.parseInt(newAmountStr);
+                        } catch (Exception e) {
+                            return;
+                        }
+
+                        Book updated = new Book(b.getId(), newTitle, newAuthor, newYear, newAmount);
                         dbHelper.updateBook(updated);
 
                         books.set(adapterPos, updated);
@@ -99,7 +110,7 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView titleView, authorView, yearView;
+        TextView titleView, authorView, yearView, amountView;
         Button deleteButton, editButton;
 
         ViewHolder(@NonNull View itemView) {
@@ -107,9 +118,9 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
             titleView = itemView.findViewById(R.id.bookTitle);
             authorView = itemView.findViewById(R.id.bookAuthor);
             yearView = itemView.findViewById(R.id.bookYear);
+            amountView = itemView.findViewById(R.id.bookAmount);
             deleteButton = itemView.findViewById(R.id.deleteButton);
             editButton = itemView.findViewById(R.id.editButton);
         }
     }
 }
-

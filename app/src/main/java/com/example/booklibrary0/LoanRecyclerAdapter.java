@@ -26,8 +26,7 @@ public class LoanRecyclerAdapter extends RecyclerView.Adapter<LoanRecyclerAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_loan, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_loan, parent, false);
         return new ViewHolder(view);
     }
 
@@ -44,7 +43,9 @@ public class LoanRecyclerAdapter extends RecyclerView.Adapter<LoanRecyclerAdapte
             if (adapterPos == RecyclerView.NO_POSITION) return;
 
             Loan l = loans.get(adapterPos);
-            dbHelper.deleteLoan(l.getId());
+
+            // Удаление записи = возврат книги
+            dbHelper.returnBookAndDeleteLoan(l.getId(), l.getBookId());
 
             loans.remove(adapterPos);
             notifyItemRemoved(adapterPos);

@@ -33,9 +33,10 @@ public class RecordsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private LoanRecyclerAdapter adapter;
-    private final List<Loan> loans = new ArrayList<>();
 
+    private final List<Loan> loans = new ArrayList<>();
     private DatabaseHelper dbHelper;
+
     private List<Book> books = new ArrayList<>();
     private List<User> users = new ArrayList<>();
 
@@ -73,14 +74,20 @@ public class RecordsFragment extends Fragment {
     }
 
     private void showAddRecordDialog() {
-        // Обновим справочники перед показом
         books = dbHelper.getAllBooks();
         users = dbHelper.getAllUsers();
 
-        if (books.isEmpty()) {
-            Toast.makeText(getContext(), "Сначала добавьте книги", Toast.LENGTH_SHORT).show();
+        // Берём только книги, которые есть в наличии
+        List<Book> availableBooks = new ArrayList<>();
+        for (Book b : books) {
+            if (b.getAmount() > 0) availableBooks.add(b);
+        }
+
+        if (availableBooks.isEmpty()) {
+            Toast.makeText(getContext(), "Нет книг в наличии", Toast.LENGTH_SHORT).show();
             return;
         }
+
         if (users.isEmpty()) {
             Toast.makeText(getContext(), "Сначала загрузите пользователей из контактов", Toast.LENGTH_SHORT).show();
             return;
@@ -93,7 +100,9 @@ public class RecordsFragment extends Fragment {
 
         ArrayAdapter<String> bookAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item);
         bookAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        for (Book b : books) bookAdapter.add(b.getTitle());
+        for (Book b : availableBooks) {
+            bookAdapter.add(b.getTitle() + " (" + b.getAmount() + ")");
+        }
         spinnerBooks.setAdapter(bookAdapter);
 
         ArrayAdapter<String> userAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item);
@@ -116,7 +125,15 @@ public class RecordsFragment extends Fragment {
                     String date = etDate.getText().toString().trim();
                     if (date.isEmpty()) return;
 
-                    dbHelper.addLoan(books.get(bookPos).getId(), users.get(userPos).getId(), date);
+                    Book selectedBook = availableBooks.get(bookPos);
+                    User selectedUser = users.get(userPos);
+
+                    boolean ok = dbHelper.issueBook(selectedBook.getId(), selectedUser.getId(), date);
+                    if (!ok) {
+                        Toast.makeText(getContext(), "Книги нет в наличии", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     loadAll();
                     Toast.makeText(getContext(), "Запись добавлена", Toast.LENGTH_SHORT).show();
                 })
@@ -135,11 +152,7 @@ public class RecordsFragment extends Fragment {
 
     private void syncContactsToDb() {
         ContentResolver resolver = requireContext().getContentResolver();
-
-        Cursor cursor = resolver.query(
-                ContactsContract.Contacts.CONTENT_URI,
-                null, null, null, null
-        );
+        Cursor cursor = resolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
 
         if (cursor == null) {
             Toast.makeText(getContext(), "Не удалось прочитать контакты", Toast.LENGTH_SHORT).show();
@@ -154,7 +167,6 @@ public class RecordsFragment extends Fragment {
             String contactId = cursor.getString(idIdx);
             String name = cursor.getString(nameIdx);
             int hasPhone = cursor.getInt(hasPhoneIdx);
-
             if (hasPhone <= 0) continue;
 
             Cursor phones = resolver.query(

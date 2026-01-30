@@ -1,9 +1,9 @@
 package com.example.booklibrary0;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -35,73 +35,80 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Book book = books.get(position);
-
         holder.titleView.setText(book.getTitle());
-        holder.authorView.setText("Автор: " + book.getAuthor());
-        holder.yearView.setText("Год: " + book.getYear());
-        holder.amountView.setText("Количество: " + book.getAmount());
 
-        holder.deleteButton.setOnClickListener(v -> {
+        holder.itemView.setOnClickListener(v -> {
             int adapterPos = holder.getBindingAdapterPosition();
             if (adapterPos == RecyclerView.NO_POSITION) return;
 
             Book b = books.get(adapterPos);
-            dbHelper.deleteBook(b.getId());
-
-            books.remove(adapterPos);
-            notifyItemRemoved(adapterPos);
-
-            if (refreshCallback != null) refreshCallback.run();
+            showBookInfoDialog(holder.itemView.getContext(), b, adapterPos);
         });
+    }
 
-        holder.editButton.setOnClickListener(v -> {
-            int adapterPos = holder.getBindingAdapterPosition();
-            if (adapterPos == RecyclerView.NO_POSITION) return;
+    private void showBookInfoDialog(Context context, Book book, int adapterPos) {
+        String message =
+                "Автор: " + book.getAuthor() + "\n" +
+                        "Год: " + book.getYear() + "\n" +
+                        "Количество: " + book.getAmount();
 
-            Book b = books.get(adapterPos);
+        new AlertDialog.Builder(context)
+                .setTitle(book.getTitle())
+                .setMessage(message)
+                .setPositiveButton("Закрыть", null)
 
-            View dialogView = LayoutInflater.from(holder.itemView.getContext())
-                    .inflate(R.layout.dialog_edit_book, null);
+                // Если нужен только просмотр — удалите 2 кнопки ниже
+                .setNeutralButton("Изменить", (d, w) -> showEditDialog(context, book, adapterPos))
+                .setNegativeButton("Удалить", (d, w) -> {
+                    dbHelper.deleteBook(book.getId());
+                    books.remove(adapterPos);
+                    notifyItemRemoved(adapterPos);
+                    if (refreshCallback != null) refreshCallback.run();
+                })
+                .show();
+    }
 
-            EditText etTitle = dialogView.findViewById(R.id.etTitle);
-            EditText etAuthor = dialogView.findViewById(R.id.etAuthor);
-            EditText etYear = dialogView.findViewById(R.id.etYear);
-            EditText etAmount = dialogView.findViewById(R.id.etAmount); // важно: etAmount
+    private void showEditDialog(Context context, Book book, int adapterPos) {
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_edit_book, null);
 
-            etTitle.setText(b.getTitle());
-            etAuthor.setText(b.getAuthor());
-            etYear.setText(b.getYear());
-            etAmount.setText(String.valueOf(b.getAmount()));
+        EditText etTitle = dialogView.findViewById(R.id.etTitle);
+        EditText etAuthor = dialogView.findViewById(R.id.etAuthor);
+        EditText etYear = dialogView.findViewById(R.id.etYear);
+        EditText etAmount = dialogView.findViewById(R.id.etAmount); // важно: etAmount
 
-            new AlertDialog.Builder(holder.itemView.getContext())
-                    .setTitle("Изменить книгу")
-                    .setView(dialogView)
-                    .setPositiveButton("Сохранить", (d, w) -> {
-                        String newTitle = etTitle.getText().toString().trim();
-                        String newAuthor = etAuthor.getText().toString().trim();
-                        String newYear = etYear.getText().toString().trim();
-                        String newAmountStr = etAmount.getText().toString().trim();
+        etTitle.setText(book.getTitle());
+        etAuthor.setText(book.getAuthor());
+        etYear.setText(book.getYear());
+        etAmount.setText(String.valueOf(book.getAmount()));
 
-                        if (newTitle.isEmpty() || newAuthor.isEmpty() || newYear.isEmpty() || newAmountStr.isEmpty()) return;
+        new AlertDialog.Builder(context)
+                .setTitle("Изменить книгу")
+                .setView(dialogView)
+                .setPositiveButton("Сохранить", (d, w) -> {
+                    String newTitle = etTitle.getText().toString().trim();
+                    String newAuthor = etAuthor.getText().toString().trim();
+                    String newYear = etYear.getText().toString().trim();
+                    String newAmountStr = etAmount.getText().toString().trim();
 
-                        int newAmount;
-                        try {
-                            newAmount = Integer.parseInt(newAmountStr);
-                        } catch (Exception e) {
-                            return;
-                        }
+                    if (newTitle.isEmpty() || newAuthor.isEmpty() || newYear.isEmpty() || newAmountStr.isEmpty()) return;
 
-                        Book updated = new Book(b.getId(), newTitle, newAuthor, newYear, newAmount);
-                        dbHelper.updateBook(updated);
+                    int newAmount;
+                    try {
+                        newAmount = Integer.parseInt(newAmountStr);
+                    } catch (Exception e) {
+                        return;
+                    }
 
-                        books.set(adapterPos, updated);
-                        notifyItemChanged(adapterPos);
+                    Book updated = new Book(book.getId(), newTitle, newAuthor, newYear, newAmount);
+                    dbHelper.updateBook(updated);
 
-                        if (refreshCallback != null) refreshCallback.run();
-                    })
-                    .setNegativeButton("Отмена", null)
-                    .show();
-        });
+                    books.set(adapterPos, updated);
+                    notifyItemChanged(adapterPos);
+
+                    if (refreshCallback != null) refreshCallback.run();
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
     }
 
     @Override
@@ -110,17 +117,11 @@ public class BookRecyclerAdapter extends RecyclerView.Adapter<BookRecyclerAdapte
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView titleView, authorView, yearView, amountView;
-        Button deleteButton, editButton;
+        TextView titleView;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             titleView = itemView.findViewById(R.id.bookTitle);
-            authorView = itemView.findViewById(R.id.bookAuthor);
-            yearView = itemView.findViewById(R.id.bookYear);
-            amountView = itemView.findViewById(R.id.bookAmount);
-            deleteButton = itemView.findViewById(R.id.deleteButton);
-            editButton = itemView.findViewById(R.id.editButton);
         }
     }
 }
